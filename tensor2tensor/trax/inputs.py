@@ -22,6 +22,7 @@ from __future__ import print_function
 import collections
 import os
 import random
+import tempfile
 
 import gin
 import numpy as onp
@@ -77,8 +78,25 @@ def inputs(n_devices, dataset_name, data_dir=None, input_name=None,
   Returns:
     trax.inputs.Inputs
   """
-  assert data_dir, 'Must provide a data directory'
-  data_dir = os.path.expanduser(data_dir)
+  if not data_dir:
+    data_dir = os.path.join(tempfile.gettempdir(), dataset_name)
+    tf.logging.info(
+        ('No dataset directory provided. '
+         'Downloading and generating dataset for %s'
+         ' into temporary directory %s . '
+         'For large datasets it is better to prepare datasets manually!')
+        % (dataset_name, data_dir))
+    if dataset_name.startswith('t2t_'):
+      # Download and run dataset generator for T2T problem.
+      tf.gfile.MakeDirs(data_dir)
+      tmp_dir = tempfile.mkdtemp()
+      t2t_problems.problem(dataset_name[4:]).generate_data(data_dir, tmp_dir)
+    else:
+      # Download and prepare TFDS dataset.
+      tfds_builder = tfds.builder(dataset_name)
+      tfds_builder.download_and_prepare(download_dir=data_dir)
+  else:
+    data_dir = os.path.expanduser(data_dir)
 
   (train_batches, train_eval_batches, eval_batches,
    input_name, input_shape, input_dtype,
