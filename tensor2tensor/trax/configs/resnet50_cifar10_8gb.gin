@@ -18,7 +18,7 @@ inputs.dataset_name = 'cifar10'
 
 # Parameters for MultifactorSchedule:
 # ==============================================================================
-EvalAdjustingSchedule.constant = 4.0
+EvalAdjustingSchedule.constant = 1.0
 MultifactorSchedule.factors = 'constant * linear_warmup'
 MultifactorSchedule.warmup_steps = 400
 

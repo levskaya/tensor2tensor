@@ -22,7 +22,6 @@ from __future__ import print_function
 import collections
 import os
 import random
-import tempfile
 
 import gin
 import numpy as onp
@@ -79,22 +78,23 @@ def inputs(n_devices, dataset_name, data_dir=None, input_name=None,
     trax.inputs.Inputs
   """
   if not data_dir:
-    data_dir = os.path.join(tempfile.gettempdir(), dataset_name)
+    data_dir = os.path.expanduser('~/tensorflow_datasets/')
+    dl_dir = os.path.join(data_dir, 'download')
     tf.logging.info(
         ('No dataset directory provided. '
-         'Downloading and generating dataset for %s'
-         ' into temporary directory %s . '
+         'Downloading and generating dataset for %s inside data directory %s '
          'For large datasets it is better to prepare datasets manually!')
         % (dataset_name, data_dir))
     if dataset_name.startswith('t2t_'):
       # Download and run dataset generator for T2T problem.
+      data_dir = os.path.join(data_dir, dataset_name)
       tf.gfile.MakeDirs(data_dir)
-      tmp_dir = tempfile.mkdtemp()
-      t2t_problems.problem(dataset_name[4:]).generate_data(data_dir, tmp_dir)
+      tf.gfile.MakeDirs(dl_dir)
+      t2t_problems.problem(dataset_name[4:]).generate_data(data_dir, dl_dir)
     else:
       # Download and prepare TFDS dataset.
       tfds_builder = tfds.builder(dataset_name)
-      tfds_builder.download_and_prepare(download_dir=data_dir)
+      tfds_builder.download_and_prepare(download_dir=dl_dir)
   else:
     data_dir = os.path.expanduser(data_dir)
 
